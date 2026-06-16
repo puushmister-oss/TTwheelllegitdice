@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wheellegit Dice 🎲</title>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  color:white;
+  overflow:hidden;
+  transition:0.5s;
+}
+
+body.dark{background:radial-gradient(circle at top,#0b1220,#05060a);}
+body.blue{background:radial-gradient(circle at top,#0a1a3a,#020617);}
+body.orange{background:radial-gradient(circle at top,#3a1a05,#120703);}
+
+.glow{
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(99,102,241,.25),transparent 45%),
+    radial-gradient(circle at 80% 70%,rgba(168,85,247,.2),transparent 50%);
+  filter:blur(80px);
+}
+
+/* 🔥 ПАНЕЛЬ СПРАВА */
+.colorsPanel{
+  position:fixed;
+  right:30px;
+  top:50%;
+  transform:translateY(-50%);
+  width:180px;
+  padding:14px;
+  border-radius:18px;
+  background:rgba(30,60,90,0.55);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  z-index:10;
+}
+
+.colorsPanel h3{
+  margin:0 0 10px;
+  font-size:14px;
+  opacity:0.8;
+  letter-spacing:1px;
+}
+
+.colorItem{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px;
+  margin-bottom:8px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.25);
+}
+
+.colorBox{
+  width:18px;
+  height:18px;
+  border-radius:5px;
+}
+
+.colorText{
+  font-size:13px;
+}
+
+/* APP */
+.app{
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:2;
+}
+
+.card{
+  width:380px;
+  padding:20px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(16px);
+  text-align:center;
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+#diceArea{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  min-height:70px;
+  margin:15px 0;
+}
+
+.dice{
+  width:55px;
+  height:55px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size:10px;
+  opacity:0;
+}
+
+/* 🔥 НОВАЯ АНИМАЦИЯ КАК НА BONGO */
+@keyframes bounceDrop{
+  0%{transform:translateY(-120px) scale(.6); opacity:0;}
+  60%{transform:translateY(10px) scale(1.05);}
+  80%{transform:translateY(-5px);}
+  100%{transform:translateY(0) scale(1); opacity:1;}
+}
+
+.dice.show{
+  animation:bounceDrop .45s ease forwards;
+}
+
+/* MEGA (оставляем старую плавность) */
+.dice.mega{
+  transform:translateY(-80px) scale(.5);
+  transition:.6s cubic-bezier(.2,1.4,.2,1);
+}
+.dice.mega.show{
+  transform:translateY(0) scale(1);
+  opacity:1;
+}
+
+.red{background:#ff4d4d;}
+.orange{background:#ff9f1a;}
+.yellow{background:#ffd500;}
+.green{background:#2ee59d;}
+.blue{background:#3b82f6;}
+.purple{background:#a855f7;}
+
+button,select{
+  padding:10px;
+  margin:6px;
+  border:none;
+  border-radius:10px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button{background:#6366f1;color:white;}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  background:rgba(0,0,0,.35);
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+  z-index:5;
+}
+
+.overlay.show{opacity:1}
+
+.shake{animation:shake .9s;}
+
+@keyframes shake{
+  25%{transform:translate(-6px,3px)}
+  50%{transform:translate(6px,-3px)}
+  75%{transform:translate(-4px,2px)}
+}
+
+/* 🐶🐱 */
+#animals{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+}
+
+.animal{
+  position:absolute;
+  font-size:28px;
+  animation:float linear infinite;
+}
+
+@keyframes float{
+  from{transform:translateY(110vh);}
+  to{transform:translateY(-20vh);}
+}
+</style>
+</head>
+
+<body class="dark">
+
+<div class="glow"></div>
+<div id="animals"></div>
+
+<div class="colorsPanel">
+  <h3>COLORS</h3>
+  <div class="colorItem"><div class="colorBox red"></div><div class="colorText">Red ❌ Fail Trade</div></div>
+  <div class="colorItem"><div class="colorBox orange"></div><div class="colorText">Orange 🙈 No Thanks</div></div>
+  <div class="colorItem"><div class="colorBox yellow"></div><div class="colorText">Yellow 🤝 Deal?</div></div>
+  <div class="colorItem"><div class="colorBox green"></div><div class="colorText">Green ✅ Fair Trade</div></div>
+  <div class="colorItem"><div class="colorBox blue"></div><div class="colorText">Blue 📄 Last Offer</div></div>
+  <div class="colorItem"><div class="colorBox purple"></div><div class="colorText">Purple ➕ Add More</div></div>
+</div>
+
+<div class="app">
+  <div class="card">
+    <h2>Wheellegit Dice 🎲</h2>
+
+    <select onchange="setTheme(this.value)">
+      <option value="dark">Dark</option>
+      <option value="blue">Blue</option>
+      <option value="orange">Orange</option>
+    </select>
+
+    <br>
+
+    <select id="count">
+      <option>1</option><option>2</option>
+      <option selected>3</option>
+      <option>4</option><option>5</option><option>6</option>
+    </select>
+
+    <div id="diceArea"></div>
+
+    <button onclick="roll()">Roll Again ⚡</button>
+    <button onclick="mega()">Mega Roll 🐢</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <h2 id="msg">Loading...</h2>
+</div>
+
+<script>
+const colors=["red","orange","yellow","green","blue","purple"];
+
+/* 🐶🐱 */
+const container=document.getElementById("animals");
+setInterval(()=>{
+  const a=document.createElement("div");
+  a.className="animal";
+  a.textContent=Math.random()>0.5?"🐶":"🐱";
+  a.style.left=Math.random()*100+"vw";
+  a.style.animationDuration=(6+Math.random()*6)+"s";
+  container.appendChild(a);
+  setTimeout(()=>a.remove(),12000);
+},500);
+
+function setTheme(t){
+  document.body.className=t;
+}
+
+/* SOUND */
+let ctx;
+function audio(){
+  if(!ctx){
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+  }
+  return ctx;
+}
+
+function playSound(i){
+  const c=audio();
+  const o=c.createOscillator();
+  const g=c.createGain();
+  o.frequency.value=220+i*60;
+  g.gain.setValueAtTime(0.2,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.15);
+  o.connect(g);
+  g.connect(c.destination);
+  o.start();
+  o.stop(c.currentTime+0.15);
+}
+
+/* SERVER */
+function fakeServer(count,delay){
+  return new Promise(r=>{
+    setTimeout(()=>{
+      r(Array.from({length:count},
+        ()=>colors[Math.floor(Math.random()*colors.length)]
+      ));
+    },delay);
+  });
+}
+
+/* 🔥 FAST BOUNCE */
+function instantRender(list){
+  const area=document.getElementById("diceArea");
+  area.innerHTML="";
+
+  list.forEach((c,i)=>{
+    const d=document.createElement("div");
+    d.className="dice "+c;
+    d.textContent=c;
+    area.appendChild(d);
+
+    setTimeout(()=>{
+      d.classList.add("show");
+      playSound(i);
+    },i*60); // быстро, но с каскадом
+  });
+}
+
+/* SLOW */
+function slowRender(list){
+  const area=document.getElementById("diceArea");
+  area.innerHTML="";
+
+  list.forEach((c,i)=>{
+    const d=document.createElement("div");
+    d.className="dice mega "+c;
+    d.textContent=c;
+    area.appendChild(d);
+
+    setTimeout(()=>{
+      d.classList.add("show");
+      playSound(i);
+    },i*600);
+  });
+}
+
+function show(t){
+  document.getElementById("msg").textContent=t;
+  overlay.classList.add("show");
+}
+
+async function roll(){
+  show("Rolling...");
+  const count=+document.getElementById("count").value;
+
+  const res=await fakeServer(count,600);
+
+  setTimeout(()=>{
+    overlay.classList.remove("show");
+    instantRender(res);
+  },150);
+}
+
+async function mega(){
+  document.body.classList.add("shake");
+  setTimeout(()=>document.body.classList.remove("shake"),900);
+
+  show("MEGA ROLL ⚡");
+
+  const count=+document.getElementById("count").value;
+
+  const res=await fakeServer(count,3000);
+
+  setTimeout(()=>{
+    overlay.classList.remove("show");
+    slowRender(res);
+
+    setTimeout(()=>{
+      confetti({particleCount:150,spread:120});
+    }, res.length * 600 + 400);
+
+  },300);
+}
+</script>
+
+</body>
+</html>
